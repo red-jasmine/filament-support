@@ -26,7 +26,7 @@
         "icetalker/filament-table-repeatable-entry": "*",
         "ibrahim-bougaoua/filaprogress": "*",
         "codewithdennis/filament-select-tree": "*",
-        "filament/spatie-laravel-media-library-plugin": "^4.5",
+        "filament/spatie-laravel-media-library-plugin": "^4.0",
         "malzariey/filament-daterangepicker-filter": "*",
         "maiden-voyage-software/blade-emojis": "^0.1.5",
         "guava/filament-icon-picker": "^3.0"
