@@ -21,11 +21,11 @@
     ],
     "require": {
         "red-jasmine/support":  "^1.0",
-        "filament/filament": "^4",
+        "filament/filament": "^4.0|^5.0",
         "mokhosh/filament-rating": "^2.0",
         "icetalker/filament-table-repeatable-entry": "*",
         "codewithdennis/filament-select-tree": "*",
-        "filament/spatie-laravel-media-library-plugin": "^4.0",
+        "filament/spatie-laravel-media-library-plugin": "*",
         "malzariey/filament-daterangepicker-filter": "*",
         "maiden-voyage-software/blade-emojis": "^0.1.5",
         "guava/filament-icon-picker": "^3.0"
