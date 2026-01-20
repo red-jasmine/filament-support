@@ -1,0 +1,241 @@
+<?php
+
+namespace RedJasmine\FilamentSupport\Helpers;
+
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
+use RedJasmine\Support\Domain\Contracts\BelongsToOwnerInterface;
+use RedJasmine\Support\Domain\Queries\FindQuery;
+use RedJasmine\Support\Exceptions\BaseException;
+use RedJasmine\Support\Foundation\Data\Data;
+use RedJasmine\Support\Foundation\Owner\Owner;
+
+/**
+ * @property string $translationNamespace
+ * @property string $service
+ * @property string $dataClass 默认的 DTO
+ * @property string $createCommand 创建命令
+ * @property string $updateCommand 更新命令
+ * @property string $deleteCommand 删除命令
+ * @property string $findQuery 查询服务
+ */
+trait ResourcePageHelper
+{
+
+    use PageHelper;
+
+    //use HasClusterSubNavigation;
+
+    public static function getEloquentQuery() : Builder
+    {
+
+
+        $query = app(static::$service)->repository->query();
+        $user  = auth()->user();
+
+        if (static::onlyOwner()) {
+            // TODO 判断是否为超级管理员 , 支持 总后台查看
+            if (!(method_exists($user, 'isAdministrator') && $user->isAdministrator())) {
+                $query->onlyOwner(Owner::getOwner($user));
+            }
+        }
+        return $query;
+    }
+
+    public static function onlyOwner() : bool
+    {
+        return static::$onlyOwner ?? false;
+    }
+
+
+    public static function getDeleteCommand() : ?string
+    {
+        return static::$deleteCommand;
+    }
+
+    public static function getQueryService() : ?string
+    {
+        return static::$service;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeCreate(array $data) : array
+    {
+
+
+        $resource = static::getResource();
+        if ($resource::onlyOwner()) {
+
+            $user = auth()->user();
+            if (method_exists($user, 'isAdministrator') && $user->isAdministrator()) {
+            } else {
+                $owner              = Owner::getOwner();
+                $data['owner_type'] = $owner->getType();
+                $data['owner_id']   = $owner->getID();
+                //$query->onlyOwner($owner);
+            }
+
+        }
+
+
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data) : array
+    {
+        // TODO 如果是总后台那么允许自定义
+        $resource = static::getResource();
+        if ($resource::onlyOwner()) {
+            $user = auth()->user();
+            if (method_exists($user, 'isAdministrator') && $user->isAdministrator()) {
+            } else {
+                $owner              = Owner::getOwner();
+                $data['owner_type'] = $owner->getType();
+                $data['owner_id']   = $owner->getID();
+                //$query->onlyOwner($owner);
+            }
+        }
+
+
+        return $data;
+    }
+
+    /**
+     * @throws BaseException
+     */
+    protected function handleRecordCreation(array $data) : Model
+    {
+
+        $resource = static::getResource();
+        try {
+            $service = app($resource::getService());
+            $command = ($resource::getCreateCommand())::validateAndCreate($data);
+            return $service->create($command);
+        } catch (ValidationException $exception) {
+
+            Notification::make()
+                        ->title($exception->getMessage())
+                        ->danger()
+                        ->send();
+            throw $exception;
+        } catch (BaseException $abstractException) {
+            Notification::make()
+                        ->title($abstractException->getMessage())
+                        ->danger()
+                        ->send();
+            report($abstractException);
+            throw ValidationException::withMessages([]);
+        }
+    }
+
+    public static function getService() : ?string
+    {
+        return static::$service;
+    }
+
+
+    public static function getCreateCommand() : ?string
+    {
+        return static::$createCommand ?? static::$dataClass;
+    }
+
+    protected function resolveRecord(int|string $key) : Model
+    {
+        $resource     = static::getResource();
+        $queryService = app($resource::getService());
+
+
+        if (static::onlyOwner()) {
+            $user  = auth()->user();
+            $owner = $user instanceof BelongsToOwnerInterface ? $user->owner() : $user;
+            if (method_exists($user, 'isAdministrator') && $user->isAdministrator()) {
+            } else {
+                $queryService->repository->withQuery(fn($query) => $query->onlyOwner($owner));
+            }
+        }
+        $findQuery = static::getFindQuery()::make([]);
+        $findQuery->setKey($key);
+
+        $record = $queryService->find($resource::callFindQuery($findQuery));
+
+        if ($record === null) {
+            throw (new ModelNotFoundException)->setModel($this->getModel(), [$key]);
+        }
+        return $resource::callResolveRecord($record);
+
+    }
+
+    public static function getFindQuery() : string
+    {
+        return static::$resource::$findQuery ?? FindQuery::class;
+    }
+
+    public static function callFindQuery(FindQuery $findQuery) : FindQuery
+    {
+        return $findQuery;
+    }
+
+    public static function callResolveRecord(Model $model) : Model
+    {
+
+
+        if ($model->relationLoaded('extension')) {
+
+            foreach ($model->extension->getAttributes() as $key => $value) {
+                $model->setAttribute($key, $model->extension->{$key});
+
+            }
+        }
+
+        return $model;
+    }
+
+    /**
+     * @throws BaseException
+     */
+    protected function handleRecordUpdate(Model $record, array $data) : Model
+    {
+
+        try {
+            $resource = static::getResource();
+
+            $dataClass = $resource::getUpdateCommand();
+            $service   = app($resource::getService());
+
+            /**
+             * @var Data $dataClass
+             */
+            $command = $dataClass::validateAndCreate($data);
+
+            $command->setKey($record->getKey());
+            return $service->update($command);
+        } catch (ValidationException $exception) {
+            // TODO 设置表单的错误
+            Notification::make()
+                        ->title($exception->getMessage())
+                        ->danger()
+                        ->send();
+            throw $exception;
+        } catch (BaseException $abstractException) {
+            Notification::make()
+                        ->title($abstractException->getMessage())
+                        ->danger()
+                        ->send();
+            report($abstractException);
+            throw ValidationException::withMessages([]);
+        }
+    }
+
+    public static function getUpdateCommand() : ?string
+    {
+        return static::$updateCommand ?? static::$dataClass;
+    }
+
+}
