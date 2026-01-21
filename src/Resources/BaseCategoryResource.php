@@ -7,6 +7,7 @@ use Filament\Tables\Table;
 use RedJasmine\FilamentSupport\Resources\Schemas\CategoryForm;
 use RedJasmine\FilamentSupport\Resources\Tables\CategoryTable;
 use RedJasmine\Support\Foundation\Facades\Hook;
+use RedJasmine\Support\Presets\Category\Domain\Contracts\HasImageMediaInterface;
 
 /**
  * @property bool $isTranslatable
@@ -29,10 +30,12 @@ trait BaseCategoryResource
 
     }
 
-
     public static function categoryForm(Schema $schema) : Schema
     {
-        return CategoryForm::configure($schema, static::$onlyOwner ?? false, static::$isTranslatable ?? false);
+        $categoryForm           = new CategoryForm();
+        $categoryForm->hasImage = is_subclass_of(static::$model, HasImageMediaInterface::class);
+        $categoryForm->hasOwner = static::$onlyOwner ?? false;
+        return $categoryForm->configure($schema);
     }
 
     public static function table(Table $table) : Table

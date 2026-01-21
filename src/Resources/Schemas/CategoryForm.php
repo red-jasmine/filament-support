@@ -4,11 +4,9 @@ namespace RedJasmine\FilamentSupport\Resources\Schemas;
 
 
 use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
@@ -16,21 +14,21 @@ use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Guava\IconPicker\Forms\Components\IconPicker;
 use Illuminate\Database\Eloquent\Model;
 use RedJasmine\FilamentSupport\Forms\Components\SelectTree;
 use RedJasmine\FilamentSupport\Forms\Components\TranslatableTabs;
-use RedJasmine\FilamentSupport\Forms\Components\TranslationTabs;
 use RedJasmine\Support\Domain\Models\Enums\UniversalStatusEnum;
 use RedJasmine\Support\Domain\Models\Enums\VisibilityEnum;
 
 class CategoryForm
 {
 
+    public bool $hasOwner = false;
+    public bool $hasImage = false;
 
-    public static function configure(Schema $schema, bool $hasOwner = false, bool $isTranslatable = false) : Schema
+    public function configure(Schema $schema) : Schema
     {
-        $owner = $hasOwner ? [Owner::make()] : [];
+        $owner = $this->hasOwner ? [Owner::make()] : [];
         $schema->components([
             Flex::make([
                 Section::make([
@@ -41,17 +39,17 @@ class CategoryForm
                               ->relationship(relationship: 'parent', titleAttribute: 'name',
                                   parentAttribute: 'parent_id',
                                   modifyQueryUsing: fn($query, Get $get, ?Model $record) => $query
-                                      ->when($hasOwner, fn($query, $value) => $query->where('owner_type',
+                                      ->when($this->hasOwner, fn($query, $value) => $query->where('owner_type',
                                           $get('owner_type'))
-                                                                                    ->where('owner_id',
-                                                                                        $get('owner_id')))
+                                                                                          ->where('owner_id',
+                                                                                              $get('owner_id')))
                                       ->when($record?->getKey(),
                                           fn($query, $value) => $query->where('id', '<>', $value)),
                                   modifyChildQueryUsing: fn($query, Get $get, ?Model $record) => $query
-                                      ->when($hasOwner, fn($query, $value) => $query->where('owner_type',
+                                      ->when($this->hasOwner, fn($query, $value) => $query->where('owner_type',
                                           $get('owner_type'))
-                                                                                    ->where('owner_id',
-                                                                                        $get('owner_id')))
+                                                                                          ->where('owner_id',
+                                                                                              $get('owner_id')))
                                       ->when($record?->getKey(),
                                           fn($query, $value) => $query->where('id', '<>', $value)),
                               )
@@ -78,28 +76,15 @@ class CategoryForm
 
                     KeyValue::make('extra')
                             ->default([])
-                            ->label(__('red-jasmine-user::user-group.fields.extra')),
+                            ->label(__('red-jasmine-support::category.fields.extra'))
+
 
                 ]),
+
                 Section::make([
-                    SpatieMediaLibraryFileUpload::make('image')
-                                                ->saveRelationshipsUsing(null)
-                                                ->saveUploadedFileUsing(null)
-                                                ->dehydrated()
-                                                ->collection('image')
-                                                ->dehydrateStateUsing(function ($state) {
-                                                    if(is_string($state)){
-                                                        return $state;
-                                                    }
-                                                    if(is_object($state)){
-                                                        return $state->getRealPath();
-                                                    }
-                                                }),
-                    // FileUpload::make('image')
-                    //           ->label(__('red-jasmine-support::category.fields.image'))
-                    //           ->image(),
-                    IconPicker::make('icon')
-                              ->label(__('red-jasmine-support::category.fields.icon'))
+                    $this->getImageField(),
+                    TextInput::make('icon')
+                             ->label(__('red-jasmine-support::category.fields.icon'))
                     ,
                     ColorPicker::make('color')
                                ->label(__('red-jasmine-support::category.fields.color'))
@@ -143,5 +128,26 @@ class CategoryForm
 
 
         return $schema;
+    }
+
+    protected function getImageField() : ?SpatieMediaLibraryFileUpload
+    {
+        if ($this->hasImage) {
+            return SpatieMediaLibraryFileUpload::make('image')
+                                               ->label(__('red-jasmine-support::category.fields.image'))
+                                               ->saveRelationshipsUsing(null)
+                                               ->saveUploadedFileUsing(null)
+                                               ->dehydrated()
+                                               ->collection('image')
+                                               ->dehydrateStateUsing(function ($state) {
+                                                   if (is_string($state)) {
+                                                       return $state;
+                                                   }
+                                                   if (is_object($state)) {
+                                                       return $state->getRealPath();
+                                                   }
+                                               });
+        }
+        return null;
     }
 }

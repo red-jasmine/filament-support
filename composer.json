@@ -27,8 +27,7 @@
         "codewithdennis/filament-select-tree": "*",
         "filament/spatie-laravel-media-library-plugin": "*",
         "malzariey/filament-daterangepicker-filter": "*",
-        "maiden-voyage-software/blade-emojis": "^0.1.5",
-        "guava/filament-icon-picker": "^3.0"
+        "maiden-voyage-software/blade-emojis": "^0.1"
     },
     "require-dev": {
 
