@@ -10,6 +10,7 @@ use Filament\Tables\Columns\Column;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\BaseFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use RedJasmine\Support\Domain\Data\UserData;
 
 /**
@@ -19,12 +20,28 @@ trait PageHelper
 {
 
 
-    public static function ownerQueryUsing(string $name = 'owner') : callable
+    public static function ownerQueryUsing() : callable
     {
-        return static fn($query, Get $get) => $query->onlyOwner(UserData::from([
-            'type' => $get('owner_type'), 'id' => $get('owner_id')
-        ]));
+        return fn(
+            $query,
+            Get $get,
+            ?Model $record
+        ) => $query->where('owner_type', $get('owner_type'))
+                   ->where('owner_id', $get('owner_id'));
     }
+
+    public static function modifyChildOwnerQueryUsing() : callable
+    {
+        return fn(
+            $query,
+            Get $get,
+            ?Model $record
+        ) => $query->where('owner_type', $get('owner_type'))
+                   ->where('owner_id', $get('owner_id'))
+                   ->when($record?->getKey(),
+                       fn($query, $value) => $query->where('id', '<>', $value));
+    }
+
 
     public static function translationLabels(ViewComponent $component, array $parent = []) : ViewComponent
     {

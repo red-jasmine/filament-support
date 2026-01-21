@@ -27,7 +27,7 @@ trait ResourcePageHelper
 
     use PageHelper;
 
-    //use HasClusterSubNavigation;
+
 
     public static function getEloquentQuery() : Builder
     {

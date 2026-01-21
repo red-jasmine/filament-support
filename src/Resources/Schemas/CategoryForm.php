@@ -36,7 +36,9 @@ class CategoryForm
                     SelectTree::make('parent_id')
                               ->withTranslation()
                               ->label(__('red-jasmine-support::category.fields.parent_id'))
-                              ->relationship(relationship: 'parent', titleAttribute: 'name',
+                              ->relationship(
+                                  relationship: 'parent',
+                                  titleAttribute: 'name',
                                   parentAttribute: 'parent_id',
                                   modifyQueryUsing: fn($query, Get $get, ?Model $record) => $query
                                       ->when($this->hasOwner, fn($query, $value) => $query->where('owner_type',
