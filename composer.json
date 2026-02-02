@@ -1,0 +1,74 @@
+{
+    "name": "red-jasmine/filament-support",
+    "description": "This is my package filament-support",
+    "keywords": [
+        "red-jasmine",
+        "laravel",
+        "filament-support"
+    ],
+    "homepage": "https://github.com/red-jasmine/filament-support",
+    "support": {
+        "issues": "https://github.com/red-jasmine/filament-support/issues",
+        "source": "https://github.com/red-jasmine/filament-support"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "liushoukun",
+            "email": "liushoukun66@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "red-jasmine/support":  "^1.0",
+        "filament/filament": "^4.0|^5.0",
+        "mokhosh/filament-rating": "^2.0",
+        "icetalker/filament-table-repeatable-entry": "*",
+        "codewithdennis/filament-select-tree": "*",
+        "filament/spatie-laravel-media-library-plugin": "*",
+        "malzariey/filament-daterangepicker-filter": "*",
+        "maiden-voyage-software/blade-emojis": "^0.1"
+    },
+    "require-dev": {
+
+    },
+    "autoload": {
+        "psr-4": {
+            "RedJasmine\\FilamentSupport\\": "src/",
+            "RedJasmine\\FilamentSupport\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RedJasmine\\FilamentSupport\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RedJasmine\\FilamentSupport\\FilamentSupportServiceProvider"
+            ],
+            "aliases": {
+
+            }
+        },
+        "branch-alias": {
+            "dev-master": "1.0.x-dev",
+            "dev-main": "1.0.x-dev",
+            "dev-develop": "1.0.x-dev"
+        }
+    },
+    "prefer-stable": true
+}
